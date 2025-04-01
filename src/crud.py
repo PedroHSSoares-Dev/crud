@@ -10,7 +10,7 @@ def conferir_usuario(user, senha):
     try:
         # Verifica usuário e senha juntos
         cursor.execute(
-            "SELECT * FROM tbUsers WHERE Nome = %s AND Senha = %s",  # Correção aqui
+            "SELECT * FROM tbUser WHERE Nome = %s AND Senha = %s",  # Correção aqui
             (user, senha)  # Faltava o parêntese de fechamento
         )
         resultado = cursor.fetchone()
@@ -30,14 +30,14 @@ def criar_usuario(user, senha, saldo):
     cursor = conn.cursor()
     try:
         # Verifica se usuário já existe
-        cursor.execute("SELECT * FROM tbUsers WHERE Nome = %s", (user,))
+        cursor.execute("SELECT * FROM tbUser WHERE Nome = %s", (user,))
         if cursor.fetchone():
             print("Usuário já existe!")
             return False
 
         # Cria novo usuário
         cursor.execute(
-            "INSERT INTO tbUsers (Nome, Senha, Saldo) VALUES (%s, %s, %s)",
+            "INSERT INTO tbUser (Nome, Senha, Saldo) VALUES (%s, %s, %s)",
             (user, senha, saldo)
         )
         conn.commit()  # Importante para salvar no banco
