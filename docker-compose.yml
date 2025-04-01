@@ -4,13 +4,12 @@ services:
   db:
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: meu_banco
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql       # Persistência dos dados
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql  # Script de inicialização
 
 volumes:
   mysql_data:
