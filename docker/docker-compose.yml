@@ -10,7 +10,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql       # Persistência dos dados
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Inicialização do banco de dados com o script SQL
 
 volumes:
   mysql_data:
