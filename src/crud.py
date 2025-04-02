@@ -185,3 +185,73 @@ def apagar_dados(tabela, condicao):
     finally:
         cursor.close()
         conn.close()
+        
+def exibir_saldo(usuario):
+    conn = criar_conexao()
+    if conn is None:
+        return "Erro ao conectar ao banco de dados."
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT Saldo FROM tbUser WHERE Nome = %s", (usuario,))
+        resultado = cursor.fetchone()
+        if resultado:
+            saldo = resultado[0]
+            return f"Seu saldo atual é: R$ {saldo:.2f}"
+        else:
+            return "Usuário não encontrado."
+    except mysql.connector.Error as err:
+        return f"Erro ao exibir saldo: {err}"
+    finally:
+        cursor.close()
+        conn.close()
+
+        
+def depositar(usuario, valor):
+    conn = criar_conexao()
+    if conn is None:
+        return
+    cursor = conn.cursor()
+    try:
+        # Verifica se o valor é positivo
+        if valor <= 0:
+            print("Valor inválido para depósito.")
+            return
+        
+        # Atualiza o saldo do usuário
+        cursor.execute("UPDATE tbUser SET Saldo = Saldo + %s WHERE Nome = %s", (valor, usuario))
+        conn.commit() 
+        print(f"Depósito de R$ {valor:.2f} realizado com sucesso!")
+    except mysql.connector.Error as err:
+        print("Erro ao depositar:", err)
+    finally:
+        cursor.close()
+        conn.close()
+        
+def saque(usuario, valor):
+    conn = criar_conexao()
+    if conn is None:
+        return
+    cursor = conn.cursor()
+    try:
+        # Verifica se o valor é suficiente
+        cursor.execute("SELECT Saldo FROM tbUser WHERE Nome = %s", (usuario,))
+        resultado = cursor.fetchone()
+        if resultado:
+            saldo = resultado[0]
+            if valor > saldo:
+                print("Saldo insuficiente para saque.")
+                return
+        else:
+            print("Usuário não encontrado.")
+            return
+        
+        # Atualiza o saldo do usuário
+        cursor.execute("UPDATE tbUser SET Saldo = Saldo - %s WHERE Nome = %s", (valor, usuario))
+        conn.commit() 
+        print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
+    except mysql.connector.Error as err:
+        print("Erro ao sacar:", err)
+    finally:
+        cursor.close()
+        conn.close()
