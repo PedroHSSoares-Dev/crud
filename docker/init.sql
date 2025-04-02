@@ -32,6 +32,9 @@ INSERT INTO tbUser (Nome, Senha, Saldo) VALUES
     ('Beatriz Almeida', 'beaalm', 50.00);
 
 -- Criando procedure para transferir dinheiro entre usuários
+-- Remove a procedure, se ela existir
+DROP PROCEDURE IF EXISTS TransferirDinheiro;
+
 DELIMITER $$
 CREATE PROCEDURE TransferirDinheiro(
     IN p_RemetenteId INT,
@@ -42,29 +45,49 @@ BEGIN
     DECLARE v_SaldoRemetente DECIMAL(10,2);
     DECLARE v_SaldoDestinatario DECIMAL(10,2);
 
-    -- Verifica se o remetente existe e obtém seu saldo
-    SELECT Saldo INTO v_SaldoRemetente FROM tbUser WHERE Id = p_RemetenteId;
+    START TRANSACTION;
+
+    -- Bloqueia e obtém o saldo do remetente para atualização
+    SELECT Saldo INTO v_SaldoRemetente 
+      FROM tbUser 
+     WHERE Id = p_RemetenteId 
+     FOR UPDATE;
+
     IF v_SaldoRemetente IS NULL THEN
+        ROLLBACK;
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Remetente não encontrado.';
     END IF;
 
-    -- Verifica se o destinatário existe e obtém seu saldo
-    SELECT Saldo INTO v_SaldoDestinatario FROM tbUser WHERE Id = p_DestinatarioId;
+    -- Bloqueia e obtém o saldo do destinatário para atualização
+    SELECT Saldo INTO v_SaldoDestinatario 
+      FROM tbUser 
+     WHERE Id = p_DestinatarioId 
+     FOR UPDATE;
+
     IF v_SaldoDestinatario IS NULL THEN
+        ROLLBACK;
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Destinatário não encontrado.';
     END IF;
 
-    -- Verifica se o remetente tem saldo suficiente
+    -- Verifica se o remetente possui saldo suficiente
     IF v_SaldoRemetente < p_Quantia THEN
+        ROLLBACK;
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Saldo insuficiente.';
     END IF;
 
     -- Atualiza os saldos dos usuários
-    UPDATE tbUser SET Saldo = Saldo - p_Quantia WHERE Id = p_RemetenteId;
-    UPDATE tbUser SET Saldo = Saldo + p_Quantia WHERE Id = p_DestinatarioId;
+    UPDATE tbUser 
+      SET Saldo = Saldo - p_Quantia 
+     WHERE Id = p_RemetenteId;
 
-    -- Insere a transação na tabela de transações
+    UPDATE tbUser 
+      SET Saldo = Saldo + p_Quantia 
+     WHERE Id = p_DestinatarioId;
+
+    -- Registra a transação na tabela de transações
     INSERT INTO tbTransacoes (RemetenteId, DestinatarioId, Quantia) 
-    VALUES (p_RemetenteId, p_DestinatarioId, p_Quantia);
+     VALUES (p_RemetenteId, p_DestinatarioId, p_Quantia);
+
+    COMMIT;
 END $$
 DELIMITER ;

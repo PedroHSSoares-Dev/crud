@@ -7,6 +7,22 @@ import os
 def limpar_tela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def pegar_id_usuario(usuario):
+    conn = criar_conexao()
+    if conn is None:
+        return None
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT Id FROM tbUser WHERE Nome = %s", (usuario,))
+        resultado = cursor.fetchone()
+        return resultado[0] if resultado else None
+    except mysql.connector.Error as err:
+        print("Erro ao pegar ID do usuário:", err)
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
 def conferir_usuario(user, senha):
     conn = criar_conexao()
     if conn is None:
@@ -74,25 +90,38 @@ def exibir_tabelas():
         cursor.close()
         conn.close()
 
-def exibir_dados_transacoes():
+def exibir_dados_transacoes(user="admin"):
     conexao = None
     cursor = None
     try:
-        # Cria conexão usando sua função (supondo que criar_conexao() retorna uma conexão válida)
         conexao = criar_conexao()
         cursor = conexao.cursor()
         
-        cursor.execute("SELECT * FROM tbTransacoes")
+        # Se o usuário não for admin, busque o ID correspondente ao nome
+        if user != "admin":
+            cursor.execute("SELECT Id FROM tbUser WHERE Nome = %s", (user,))
+            row = cursor.fetchone()
+            if row:
+                user_id = row[0]
+            else:
+                print("Usuário não encontrado.")
+                return
+            # Filtra as transações do usuário (RemetenteId = user_id)
+            cursor.execute("SELECT * FROM tbTransacoes WHERE RemetenteId = %s", (user_id,))
+        else:
+            # Se for admin, exibe todas as transações
+            cursor.execute("SELECT * FROM tbTransacoes")
+            
         resultado = cursor.fetchall()
         
         dados_formatados = []
         for linha in resultado:
-            quantia = float(linha[3])  # Conversão para float
+            quantia = float(linha[3])  # Quantia está na coluna de índice 3
             dados_formatados.append([
-                linha[0],  # Id da Transacao
-                linha[1],  # Id Remetente
-                f"R$ {quantia:,.2f}".replace(".", "X").replace(",", ".").replace("X", ","),  # Formatação BR Quantia
-                linha[2],  # Id Destinatario
+                linha[0],  # Id da Transação
+                linha[1],  # RemetenteId
+                f"R$ {quantia:,.2f}".replace(".", "X").replace(",", ".").replace("X", ","),  # Formatação BR
+                linha[2],  # DestinatarioId
                 linha[4]   # Data e Hora
             ])
             
@@ -107,11 +136,11 @@ def exibir_dados_transacoes():
     except mysql.connector.Error as e:
         print(f"Erro de banco de dados: {e}")
     finally:
-        # Fechar recursos corretamente
         if cursor:
             cursor.close()
         if conexao and conexao.is_connected():
             conexao.close()
+
            
 def exibir_dados_user():
     conexao = None
@@ -252,6 +281,26 @@ def saque(usuario, valor):
         print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
     except mysql.connector.Error as err:
         print("Erro ao sacar:", err)
+    finally:
+        cursor.close()
+        conn.close()
+        
+def pix(remetente_id, destinatario_id, valor):
+    conn = criar_conexao()
+    if conn is None:
+        print("Erro: Não foi possível conectar ao banco de dados.")
+        return
+    cursor = conn.cursor()
+    
+    try:
+        # Chama a procedure usando IDs (inteiros)
+        cursor.callproc('TransferirDinheiro', (remetente_id, destinatario_id, valor))
+        conn.commit()
+        print(f"Transferência de R$ {valor:.2f} realizada com sucesso!")
+    
+    except mysql.connector.Error as err:
+        print(f"Erro ao realizar a transferência: {err}")
+    
     finally:
         cursor.close()
         conn.close()

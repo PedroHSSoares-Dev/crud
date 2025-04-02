@@ -1,4 +1,4 @@
-from crud import limpar_tela, conferir_usuario, criar_usuario, exibir_tabelas, exibir_dados_user, exibir_dados_transacoes, editar_dados, apagar_dados, exibir_saldo, depositar, saque
+from crud import limpar_tela,pegar_id_usuario, conferir_usuario, criar_usuario, exibir_tabelas, exibir_dados_user, exibir_dados_transacoes, editar_dados, apagar_dados, exibir_saldo, depositar, saque, pix
 from time import sleep
 
 while True:
@@ -15,6 +15,7 @@ while True:
         
         if conferir_usuario(usuario, senha):
             print("\nLogin realizado com sucesso!")
+            id_usuario = pegar_id_usuario(usuario)
             sleep(1)
             
             if usuario == "admin":  # MENU ADMINISTRADOR
@@ -126,6 +127,32 @@ while True:
                         limpar_tela()
                         print("Saque realizado com sucesso!")
                         sleep(1)
+                        
+                    elif opcao == "3":
+                        limpar_tela()
+                        print(exibir_saldo(usuario))
+                        sleep(1)
+                        valor = float(input("Digite o valor da transferência: R$"))
+                        # Obter ID do destinatário pelo nome
+                        destinatario_nome = input("Digite o nome do usuário de destino: ").strip()
+                        destinatario_id = pegar_id_usuario(destinatario_nome)
+                        
+                        if destinatario_id:
+                            # Passar IDs (remetente_id, destinatario_id, valor)
+                            remetente_id = pegar_id_usuario(usuario)
+                            pix(remetente_id, destinatario_id, valor)
+                            print("Transferência realizada com sucesso!")
+                        else:
+                            print("Destinatário não encontrado.")
+                        
+                        input("Pressione Enter para continuar...")
+                        
+                    elif opcao == "4":
+                        limpar_tela()
+                        print("Exibindo extrato...")
+                        sleep(1)
+                        exibir_dados_transacoes(usuario)
+                        input("Pressione Enter para continuar...")
                         
                     elif opcao == "5":
                         break
