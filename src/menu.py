@@ -1,4 +1,5 @@
-from crud import limpar_tela, conferir_usuario, criar_usuario, exibir_tabelas, exibir_dados_user, editar_dados
+from crud import limpar_tela, conferir_usuario, criar_usuario, exibir_tabelas, exibir_dados_user, exibir_dados_transacoes, editar_dados, apagar_dados
+from time import sleep
 
 while True:
     limpar_tela()
@@ -14,22 +15,41 @@ while True:
         
         if conferir_usuario(usuario, senha):
             print("\nLogin realizado com sucesso!")
+            sleep(1)
             
-            if usuario == "admin":
-                limpar_tela()
+            if usuario == "admin":                                                                      # MENU ADMINISTRADOR
                 
                 while True:
+                    limpar_tela()
                     print("\n===== MENU ADMINISTRADOR =====")
-                    print("1. Editar dados")
-                    print("2. Apagar dados")
-                    print("3. Voltar")
+                    print("1. Exibir dados")
+                    print("2. Editar dados")
+                    print("3. Apagar dados")
+                    print("4. Voltar")
                     opcao = input("Escolha uma opção: ")
                     
                     if opcao == "1":
+                        limpar_tela()
+                        print("Exibindo dados...")
+                        exibir_tabelas()
+                        tbEscolhida = input("Escolha a tabela que você quer visualizar: ").strip()
+                        if tbEscolhida == "tbUser":
+                            exibir_dados_user()
+                        else:
+                            exibir_dados_transacoes()
+                        input("Pressione Enter para continuar...")
+                        
+                    elif opcao == "2":
+                        limpar_tela()
                         exibir_tabelas()
                         tbEscolhida = input("Escolha a tabela que você quer editar: ").strip()
                         if tbEscolhida == "tbUser":
                             exibir_dados_user()
+                        elif tbEscolhida == "tbTransacoes":
+                            exibir_dados_transacoes()
+                        else:
+                            print("Tabela inválida.")
+                            break
                         idEscolhido = input("Digite o ID do registro que você quer editar: ").strip()
                         colunaEscolhida = input("Escolha a coluna que você quer editar: ").strip().capitalize()
                         novoValor = input("Digite o novo valor: ").strip()
@@ -39,18 +59,35 @@ while True:
                         print("Dados editados com sucesso!")
                         input("Pressione Enter para continuar...")
                         
-                        
-                    elif opcao == "2":
+                    elif opcao == "3":
                         limpar_tela()
                         print("Apagando dados...")
-                        # Aqui você pode adicionar a lógica para apagar os dados
+                        exibir_tabelas()
+                        tbEscolhida = input("Escolha a tabela que você quer apagar: ").strip()
+                        if tbEscolhida == "tbUser":
+                            exibir_dados_user()
+                        elif tbEscolhida == "tbTransacoes":
+                            exibir_dados_transacoes()
+                        else:
+                            print("Tabela inválida.")
+                            break
+                        idEscolhido = input("Digite o ID do registro que você quer apagar: ").strip()
+                        apagar_dados(tbEscolhida, idEscolhido)
+                        limpar_tela()
+                        print("Dados apagados com sucesso!")
+                        if tbEscolhida == "tbUser":
+                            exibir_dados_user()
+                        else:
+                            exibir_dados_transacoes()
+                        input("Pressione Enter para continuar...")
                         
-                    elif opcao == "3":
+                    elif opcao == "4":
                         break
                         
                     else:
                         print("Opção inválida. Tente novamente.")
-            else:
+            
+            else:                                                                                   # MENU USUÁRIO COMUM
                 print(f"Bem-vindo, {usuario}!")
         else:
             print("\nFalha no login. Verifique seus dados.")

@@ -3,6 +3,7 @@ from tabulate import tabulate
 import mysql.connector
 import os
 
+
 def limpar_tela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -72,10 +73,46 @@ def exibir_tabelas():
     finally:
         cursor.close()
         conn.close()
-        
-from tabulate import tabulate
-from mysql.connector import Error
 
+def exibir_dados_transacoes():
+    conexao = None
+    cursor = None
+    try:
+        # Cria conexão usando sua função (supondo que criar_conexao() retorna uma conexão válida)
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+        
+        cursor.execute("SELECT * FROM tbTransacoes")
+        resultado = cursor.fetchall()
+        
+        dados_formatados = []
+        for linha in resultado:
+            quantia = float(linha[3])  # Conversão para float
+            dados_formatados.append([
+                linha[0],  # Id da Transacao
+                linha[1],  # Id Remetente
+                f"R$ {quantia:,.2f}".replace(".", "X").replace(",", ".").replace("X", ","),  # Formatação BR Quantia
+                linha[2],  # Id Destinatario
+                linha[4]   # Data e Hora
+            ])
+            
+        print(tabulate(
+            dados_formatados,
+            headers=["ID", "RemetenteId", "Quantia", "DestinatarioId", "Data e Hora"],
+            tablefmt="pretty",
+            numalign="right"
+        ))
+        print(f'{len(dados_formatados)} registros encontrados.')
+    
+    except mysql.connector.Error as e:
+        print(f"Erro de banco de dados: {e}")
+    finally:
+        # Fechar recursos corretamente
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+           
 def exibir_dados_user():
     conexao = None
     cursor = None
@@ -99,13 +136,14 @@ def exibir_dados_user():
             
         print(tabulate(
             dados_formatados,
-            headers=["ID", "Usuário", "Senha", "Saldo"],
+            headers=["ID", "Nome", "Senha", "Saldo"],
             tablefmt="pretty",
             numalign="right"
         ))
         print(f'{len(dados_formatados)} registros encontrados.')
         
-    except Error as e:
+    
+    except mysql.connector.Error as e:
         print(f"Erro de banco de dados: {e}")
     finally:
         # Fechar recursos corretamente
@@ -127,6 +165,23 @@ def editar_dados(tabela, coluna, novo_valor, condicao):
         print("Dados atualizados com sucesso!")
     except mysql.connector.Error as err:
         print("Erro ao atualizar dados:", err)
+    finally:
+        cursor.close()
+        conn.close()
+
+def apagar_dados(tabela, condicao):
+    conn = criar_conexao()
+    if conn is None:
+        return
+    
+    cursor = conn.cursor()
+    try:
+        query = f"DELETE FROM {tabela} WHERE id = {condicao}"
+        cursor.execute(query)
+        conn.commit()  # Importante para salvar no banco
+        print("Dados apagados com sucesso!")
+    except mysql.connector.Error as err:
+        print("Erro ao apagar dados:", err)
     finally:
         cursor.close()
         conn.close()
