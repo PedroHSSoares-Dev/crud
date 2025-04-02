@@ -122,4 +122,21 @@ END
 
 ## 🛠️ Solução de Problemas
 
+### Erro Comum: "Usuário não encontrado"
+- Causa: IDs incorretos ou nomes digitados errados.
+- Solução: Use ```pegar_id_usuario(nome)``` para validar o destinatário.
 
+### Erro de Conexão ao MySQL
+- Verifique o container:
+```bash
+  docker ps -a
+  docker logs mysql_container
+```
+---
+## 📝 Notas de Desenvolvimento
+
+- Segurança: As senhas são armazenadas em texto plano (⚠️ não adequado para produção).
+- Melhorias Sugeridas:
+  - Adicionar criptografia de senhas com ```bcrypt```.
+  - Implementar histórico detalhado de transações.
+  - Adicionar autenticação via token JWT.
